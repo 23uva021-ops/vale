@@ -25,6 +25,7 @@ body {
     box-shadow: 0 15px 40px rgba(0,0,0,0.15);
     position: relative;
     z-index: 2;
+    transition: transform 0.4s ease;
 }
 
 img, video {
@@ -43,6 +44,14 @@ h2 {
     font-weight: 600;
     color: #ff2f68;
     margin-top: 10px;
+}
+
+.final-love {
+    display: none;
+    font-size: 18px;
+    font-style: italic;
+    color: #9b1c63;
+    margin-top: 8px;
 }
 
 /* BUTTONS */
@@ -79,6 +88,18 @@ video {
     display: none;
 }
 
+/* HEARTBEAT */
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.05); }
+    40% { transform: scale(1); }
+    60% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+.heartbeat {
+    animation: heartbeat 1.2s ease-in-out infinite;
+}
+
 /* FLOATING EMOJIS */
 .float {
     position: fixed;
@@ -90,90 +111,78 @@ video {
 
 @keyframes floatUp {
     from { transform: translateY(0); opacity: 1; }
-    to   { transform: translateY(-100vh); opacity: 0; }
+    to { transform: translateY(-100vh); opacity: 0; }
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<!-- BACKGROUND MUSIC -->
+<audio id="bgMusic" loop>
+    <source src="music.mp3" type="audio/mpeg">
+</audio>
 
-    <img id="mainImage" src="mid.jpeg">
+<div class="container" id="card">
 
-    <h2 id="question">Will you be my Valentine, Husaain? 💖</h2>
+    <img id="mainImage" src="image.jpg">
+
+    <h2 id="question">Will you be my Valentine? 💖</h2>
 
     <div class="buttons" id="buttons">
         <button class="yes" onclick="playYes()">YES 💕</button>
         <button class="no" id="noBtn">NO 🙄</button>
     </div>
 
-    <video id="yesVideo" controls>
+    <video id="yesVideo" muted controls>
         <source src="yes.mp4" type="video/mp4">
     </video>
 
-    <video id="noVideo" controls>
+    <video id="noVideo" muted controls>
         <source src="no.mp4" type="video/mp4">
     </video>
 
     <div class="quote" id="quote"></div>
+    <div class="final-love" id="finalLove">Irfana loves you 🤍</div>
 
 </div>
 
 <script>
-const noBtn = document.getElementById("noBtn");
-const image = document.getElementById("mainImage");
-const question = document.getElementById("question");
-const quote = document.getElementById("quote");
-const noVideo = document.getElementById("noVideo");
-
+let state = "initial";
 let cringeInterval = null;
 let kissInterval = null;
+let musicStarted = false;
+
+const image = document.getElementById("mainImage");
+const question = document.getElementById("question");
+const buttons = document.getElementById("buttons");
+const quote = document.getElementById("quote");
+const noVideo = document.getElementById("noVideo");
+const yesVideo = document.getElementById("yesVideo");
+const noBtn = document.getElementById("noBtn");
+const card = document.getElementById("card");
+const music = document.getElementById("bgMusic");
+
+/* START MUSIC ON FIRST INTERACTION */
+function startMusic() {
+    if (!musicStarted) {
+        music.play().catch(() => {});
+        musicStarted = true;
+    }
+}
 
 /* RUNAWAY NO */
 noBtn.addEventListener("mouseover", moveNo);
 noBtn.addEventListener("touchstart", moveNo);
 
 function moveNo() {
+    if (state === "yes") return;
     const x = Math.random() * 200 - 100;
     const y = Math.random() * 80 - 40;
     noBtn.style.transform = `translate(${x}px, ${y}px)`;
 }
 
-/* NO CLICK */
-noBtn.addEventListener("click", () => {
-    image.style.display = "none";
-    question.style.display = "none";
-
-    quote.innerText = "think again 😏";
-    quote.style.display = "block";
-
-    noVideo.style.display = "block";
-    noVideo.play();
-
-    if (!cringeInterval) startCringeEmojis();
-});
-
-/* YES CLICK */
-function playYes() {
-    image.style.display = "none";
-    question.style.display = "none";
-    document.getElementById("buttons").style.display = "none";
-    noVideo.style.display = "none";
-
-    stopCringeEmojis();
-
-    const yesVideo = document.getElementById("yesVideo");
-    yesVideo.style.display = "block";
-    yesVideo.play();
-
-    quote.innerText = "YAAY!! for our first and eternal valentines 💘";
-    quote.style.display = "block";
-
-    startKissEmojis();
-}
-
-/* EMOJI GENERATORS */
+/* EMOJI SPAWN */
 function spawnEmoji(list) {
     const el = document.createElement("div");
     el.className = "float";
@@ -184,23 +193,55 @@ function spawnEmoji(list) {
     setTimeout(() => el.remove(), 6000);
 }
 
-function startCringeEmojis() {
-    const cringe = ["😢","🤢","🤡","😒"];
-    cringeInterval = setInterval(() => spawnEmoji(cringe), 500);
-}
+/* NO CLICK */
+noBtn.addEventListener("click", () => {
+    startMusic();
+    if (state === "yes") return;
+    state = "no";
 
-function stopCringeEmojis() {
+    image.style.display = "none";
+    question.style.display = "none";
+
+    quote.innerText = "think again 😏";
+    quote.style.display = "block";
+
+    noVideo.style.display = "block";
+    noVideo.play();
+
+    if (!cringeInterval) {
+        const cringe = ["😬","🤢","🤡","😒","😢"];
+        cringeInterval = setInterval(() => spawnEmoji(cringe), 500);
+    }
+});
+
+/* YES CLICK */
+function playYes() {
+    startMusic();
+    state = "yes";
+
+    image.style.display = "none";
+    question.style.display = "none";
+    buttons.style.display = "none";
+    noVideo.style.display = "none";
+
     clearInterval(cringeInterval);
-    cringeInterval = null;
-}
 
-function startKissEmojis() {
+    yesVideo.style.display = "block";
+    yesVideo.play();
+
+    quote.innerText = "YAAY!! for our first and eternal valentines 💘";
+    quote.style.display = "block";
+
+    document.getElementById("finalLove").style.display = "block";
+
+    card.classList.add("heartbeat");
+
     const kisses = ["😘","💋","💖","😍"];
     kissInterval = setInterval(() => spawnEmoji(kisses), 300);
 }
 
-/* BACKGROUND HEARTS (ALWAYS) */
-setInterval(() => spawnEmoji(["🤍"]), 400);
+/* BACKGROUND HEARTS */
+setInterval(() => spawnEmoji(["🤍","💗"]), 450);
 </script>
 
 </body>
